@@ -40,7 +40,7 @@ install_packages() {
     local pkgs=()
     if command -v pacman &>/dev/null; then
         log "Arch Linux detected (pacman)"
-        pkgs=(mpv mpvpaper awww rogi ffmpegthumbnailer libnotify thunar ttf-jetbrains-mono-nerd)
+        pkgs=(mpv mpvpaper awww rogi ffmpegthumbnailer libnotify thunar ttf-jetbrains-mono-nerd inotify-tools)
         local missing=()
         for p in "${pkgs[@]}"; do
             pacman -Qi "$p" &>/dev/null || missing+=("$p")
@@ -281,6 +281,7 @@ build_menu() {
     printf "\360\237\227\221  Clear Wallpaper\n"
     printf "\360\237\224\200  Random Wallpaper\n"
     printf "\360\237\223\202  Open Wallpapers Folder\n"
+    printf "\360\237\224\201  Refresh\n"
 }
 
 resolve_file() {
@@ -312,17 +313,18 @@ show_picker() {
     chosen=$(build_menu "$mode" | rofi -dmenu -p "Wallpaper" \
         -theme "$SCRIPT_DIR/wallpaper.rasi" \
         -show-icons \
-        -mesg "Mode: $mode_label | Alt+1: All \302\267 Alt+2: Live \302\267 Alt+3: Static \302\267 Alt+4: Random" \
+        -mesg "Mode: $mode_label | Alt+1: All \302\267 Alt+2: Live \302\267 Alt+3: Static \302\267 Alt+4: Random \302\267 Alt+5: Refresh" \
         -kb-custom-1 "Alt+1" \
         -kb-custom-2 "Alt+2" \
         -kb-custom-3 "Alt+3" \
         -kb-custom-4 "Alt+4" \
+        -kb-custom-5 "Alt+5" \
         -i 2>/dev/null)
     local exit_code=$?
 
-    [ $exit_code -ge 10 ] && [ $exit_code -le 13 ] && {
+    [ $exit_code -ge 10 ] && [ $exit_code -le 14 ] && {
         local new_mode
-        case $exit_code in 10) new_mode="all" ;; 11) new_mode="live" ;; 12) new_mode="static" ;; 13) random_wallpaper ; return ;; esac
+        case $exit_code in 10) new_mode="all" ;; 11) new_mode="live" ;; 12) new_mode="static" ;; 13) random_wallpaper ; return ;; 14) show_picker "$mode" ; return ;; esac
         show_picker "$new_mode"
         return
     }
@@ -339,6 +341,8 @@ show_picker() {
             random_wallpaper ; return ;;
         *"Open Wallpapers Folder"*)
             thunar "$LIVE_DIR" & exit 0 ;;
+        *"Refresh"*)
+            show_picker "$mode" ; return ;;
         *"\342\200\224"*)
             show_picker "$mode" ; return ;;
     esac
@@ -388,6 +392,50 @@ case "${1:-}" in
     *)      show_picker "all" ;;
 esac
 WPEOF
+
+    # ─── wallpaper-watcher.sh ───
+    cat > "$SCRIPT_DIR/wallpaper-watcher.sh" << 'WATCHEOF'
+#!/bin/bash
+
+LIVE_DIR="__LIVE_DIR__"
+STATIC_DIR="__STATIC_DIR__"
+PID_FILE="/tmp/wallpaper-watcher.pid"
+
+cleanup() {
+    rm -f "$PID_FILE"
+    exit 0
+}
+trap cleanup EXIT INT TERM
+echo $$ > "$PID_FILE"
+
+inotifywait -q -m -e create -e moved_to \
+    "$LIVE_DIR" "$STATIC_DIR" --format "%w%f" 2>/dev/null | while read -r fullpath; do
+
+    case "$fullpath" in
+        *.mp4|*.png|*.jpg|*.jpeg)
+            notify-send -t 8000 \
+                "Wallpaper Watcher" \
+                "New: $(basename "$fullpath")"
+            ;;
+    esac
+done
+WATCHEOF
+
+    # ─── wallpaper-watcher.service ───
+    mkdir -p "$HOME/.config/systemd/user"
+    cat > "$HOME/.config/systemd/user/wallpaper-watcher.service" << 'SVCEOF'
+[Unit]
+Description=Wallpaper directory watcher - detects new files automatically
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.config/hypr/Scripts/wallpaper-watcher.sh
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target
+SVCEOF
 
     # ─── wallpaper.rasi ───
     cat > "$SCRIPT_DIR/wallpaper.rasi" << 'RASILEOF'
@@ -458,12 +506,18 @@ RASILEOF
     sed -i "s|__SCRIPT_DIR__|$script_esc|g" "$SCRIPT_DIR/wallpaper-picker.sh"
     sed -i "s|__MONITOR__|$MONITOR|g" "$SCRIPT_DIR/wallpaper-picker.sh"
 
+    sed -i "s|__LIVE_DIR__|$live_esc|g" "$SCRIPT_DIR/wallpaper-watcher.sh"
+    sed -i "s|__STATIC_DIR__|$static_esc|g" "$SCRIPT_DIR/wallpaper-watcher.sh"
+
     chmod +x "$SCRIPT_DIR/wallpaperctl.sh"
     chmod +x "$SCRIPT_DIR/wallpaper-picker.sh"
+    chmod +x "$SCRIPT_DIR/wallpaper-watcher.sh"
 
     log "Created: $SCRIPT_DIR/wallpaperctl.sh"
     log "Created: $SCRIPT_DIR/wallpaper-picker.sh"
+    log "Created: $SCRIPT_DIR/wallpaper-watcher.sh"
     log "Created: $SCRIPT_DIR/wallpaper.rasi"
+    log "Created: $HOME/.config/systemd/user/wallpaper-watcher.service"
 }
 
 setup_keybinds() {
@@ -519,7 +573,13 @@ setup_startup() {
 finalize() {
     echo ""
     info "Making scripts executable..."
-    chmod +x "$SCRIPT_DIR/wallpaperctl.sh" "$SCRIPT_DIR/wallpaper-picker.sh" 2>/dev/null
+    chmod +x "$SCRIPT_DIR/wallpaperctl.sh" "$SCRIPT_DIR/wallpaper-picker.sh" "$SCRIPT_DIR/wallpaper-watcher.sh" 2>/dev/null
+
+    systemctl --user daemon-reload 2>/dev/null
+    systemctl --user enable --now wallpaper-watcher.service 2>/dev/null && \
+        log "Wallpaper watcher service started"
+
+    systemctl --user enable --now wallpaper-watcher.service 2>/dev/null && log "Wallpaper watcher service enabled"
 
     if command -v hyprctl &>/dev/null; then
         log "Reloading Hyprland config..."
@@ -539,6 +599,12 @@ finalize() {
     echo "     SUPER + SHIFT + V → Next live wallpaper"
     echo "     SUPER + P         → Next static wallpaper"
     echo "     SUPER + SHIFT + P → Open wallpaper picker"
+    echo ""
+    echo "  New features (auto-detected):"
+    echo "  - Wallpaper watcher running in background (systemd)"
+    echo "    → Get notified when new wallpapers are added to folders"
+    echo "  - 'Refresh' option in picker (or Alt+5)"
+    echo "    → Manually re-scan wallpaper directories"
     echo ""
     echo "  Run this installer again to reconfigure paths."
 }

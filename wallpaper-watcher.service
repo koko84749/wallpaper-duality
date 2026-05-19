@@ -1,0 +1,11 @@
+[Unit]
+Description=Wallpaper directory watcher - detects new files automatically
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.config/hypr/Scripts/wallpaper-watcher.sh
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

@@ -69,6 +69,7 @@ build_menu() {
     printf "󰅖  Clear Wallpaper\n"
     printf "󰑐  Random Wallpaper\n"
     printf "  Open Wallpapers Folder\n"
+    printf "󰑓  Refresh\n"
 }
 
 resolve_file() {
@@ -100,21 +101,23 @@ show_picker() {
     chosen=$(build_menu "$mode" | rofi -dmenu -p "Wallpaper" \
         -theme "$SCRIPT_DIR/wallpaper.rasi" \
         -show-icons -icon-theme Papirus \
-        -mesg "Mode: $mode_label | Alt+1: All · Alt+2: Live · Alt+3: Static · Alt+4: Random" \
+        -mesg "Mode: $mode_label | Alt+1: All · Alt+2: Live · Alt+3: Static · Alt+4: Random · Alt+5: Refresh" \
         -kb-custom-1 "Alt+1" \
         -kb-custom-2 "Alt+2" \
         -kb-custom-3 "Alt+3" \
         -kb-custom-4 "Alt+4" \
+        -kb-custom-5 "Alt+5" \
         -i 2>/dev/null)
     local exit_code=$?
 
-    [ $exit_code -ge 10 ] && [ $exit_code -le 13 ] && {
+    [ $exit_code -ge 10 ] && [ $exit_code -le 14 ] && {
         local new_mode
         case $exit_code in
             10) new_mode="all" ;;
             11) new_mode="live" ;;
             12) new_mode="static" ;;
             13) random_wallpaper ; return ;;
+            14) show_picker "$mode" ; return ;;
         esac
         show_picker "$new_mode"
         return
@@ -136,6 +139,10 @@ show_picker() {
         *"Open Wallpapers Folder"*)
             thunar "$LIVE_DIR" &
             exit 0
+            ;;
+        *"Refresh"*)
+            show_picker "$mode"
+            return
             ;;
         *"───"*)
             show_picker "$mode"

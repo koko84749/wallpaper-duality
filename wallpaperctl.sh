@@ -56,7 +56,11 @@ static() {
         sleep 1
     fi
     local image
-    image=$(next_file "$STATIC_DIR" image)
+    if [ -n "$1" ] && [ -f "$1" ]; then
+        image="$1"
+    else
+        image=$(next_file "$STATIC_DIR" image)
+    fi
     [ -z "$image" ] && notify-send "Wallpaper" "No images found" && exit 1
     echo "$(basename "$image")" > /tmp/current-static-wallpaper
     awww img "$image" 2>/dev/null
@@ -72,7 +76,7 @@ toggle() {
 case "${1:-}" in
     live)    live ;;
     stop)    stop ;;
-    static)  static ;;
+    static)  static "$2" ;;
     toggle)  toggle ;;
     *)
         echo "Usage: $0 {live|stop|static|toggle}"
