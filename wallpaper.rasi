@@ -1,0 +1,58 @@
+@theme "/usr/share/rofi/themes/android_notification.rasi"
+
+* {
+    font: "JetBrainsMonoNL Nerd Font 11";
+}
+
+window {
+    width: 600px;
+}
+
+element {
+    padding: 6px 8px;
+    orientation: horizontal;
+}
+
+element-icon {
+    padding: 0 8px 0 0;
+    size: 2.4em;
+    vertical-align: 0.5;
+}
+
+element-text {
+    vertical-align: 0.5;
+}
+
+element selected {
+    background: #89b4fa;
+    foreground: #1e1e2e;
+    text-color: #1e1e2e;
+}
+
+element selected element-icon {
+    color: #1e1e2e;
+}
+
+listview {
+    padding: 4px;
+    spacing: 2px;
+    dynamic: true;
+}
+
+mainbox {
+    padding: 8px;
+}
+
+message {
+    background: transparent;
+    font: "JetBrainsMonoNL Nerd Font 9";
+    padding: 4px 12px;
+    text-color: #a6adc8;
+}
+
+inputbar {
+    padding: 6px;
+}
+
+
+
