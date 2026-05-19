@@ -644,6 +644,49 @@ setup_startup() {
     fi
 }
 
+setup_waybar() {
+    echo ""
+    info "Waybar module (optional)..."
+
+    if ! command -v waybar &>/dev/null; then
+        warn "waybar not installed — install it to use this feature"
+        return
+    fi
+
+    local waybar_config="$HOME/.config/waybar"
+    mkdir -p "$waybar_config"
+
+    if [ -f "$waybar_config/config.jsonc" ] && [ ! -f "$waybar_config/config.jsonc.bak" ]; then
+        cp "$waybar_config/config.jsonc" "$waybar_config/config.jsonc.bak"
+        warn "Existing waybar config backed up to config.jsonc.bak"
+    fi
+
+    cp "$(dirname "$0")/waybar-config.jsonc" "$waybar_config/config.jsonc"
+    cp "$(dirname "$0")/waybar-style.css" "$waybar_config/style.css"
+
+    cp "$(dirname "$0")/wallpaper-waybar.sh" "$SCRIPT_DIR/wallpaper-waybar.sh"
+    chmod +x "$SCRIPT_DIR/wallpaper-waybar.sh"
+
+    if ! grep -q "waybar" "$CONFIG_DIR/startup.conf" 2>/dev/null; then
+        sed -i "/^exec-once.*wallpaperctl.sh default/i exec-once = waybar" "$CONFIG_DIR/startup.conf"
+        log "Added waybar to startup.conf"
+    fi
+
+    log "Waybar module installed!"
+    log "  Config: $waybar_config/config.jsonc"
+    log "  Style:  $waybar_config/style.css"
+    log "  Script: $SCRIPT_DIR/wallpaper-waybar.sh"
+    echo ""
+    echo "  Wallpaper indicator shows in waybar:"
+    echo "    󰎁 name  → live wallpaper playing"
+    echo "    󰋩 name  → static wallpaper active"
+    echo "    󰱟 none  → no wallpaper set"
+    echo "  Left click:   Open picker"
+    echo "  Scroll up:    Next live wallpaper"
+    echo "  Scroll down:  Next static wallpaper"
+    echo "  Middle click: Toggle pause (live only)"
+}
+
 finalize() {
     echo ""
     info "Making scripts executable..."
@@ -691,4 +734,11 @@ detect_user_paths
 create_scripts
 setup_keybinds
 setup_startup
+
+echo ""
+read -r -p "  Set up Waybar wallpaper module? (y/N): " setup_waybar_opt
+if [[ "$setup_waybar_opt" =~ ^[Yy]$ ]]; then
+    setup_waybar
+fi
+
 finalize

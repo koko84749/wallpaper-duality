@@ -1,0 +1,20 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 30,
+  "modules-left": ["hyprland/workspaces"],
+  "modules-center": ["clock"],
+  "modules-right": ["custom/wallpaper", "tray", "pulseaudio", "network", "bluetooth", "battery"],
+
+  "custom/wallpaper": {
+    "exec": "$HOME/.config/hypr/Scripts/wallpaper-waybar.sh",
+    "return-type": "json",
+    "interval": 5,
+    "signal": 1,
+    "on-click": "$HOME/.config/hypr/Scripts/wallpaper-picker.sh",
+    "on-scroll-up": "$HOME/.config/hypr/Scripts/wallpaperctl.sh live",
+    "on-scroll-down": "$HOME/.config/hypr/Scripts/wallpaperctl.sh static",
+    "on-middle-click": "$HOME/.config/hypr/Scripts/wallpaperctl.sh toggle",
+    "tooltip": true
+  }
+}
