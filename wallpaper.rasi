@@ -5,29 +5,28 @@
 }
 
 window {
-    width: 900px;
+    width: 1000px;
 }
 
 element {
     padding: 4px;
     orientation: horizontal;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 element-icon {
-    padding: 0 4px 0 0;
-    size: 3.2em;
+    padding: 2px;
+    size: 6em;
     vertical-align: 0.5;
 }
 
 element-text {
-    vertical-align: 0.5;
+    enabled: false;
 }
 
 element selected {
     background: #89b4fa;
     foreground: #1e1e2e;
-    text-color: #1e1e2e;
 }
 
 element selected element-icon {
@@ -36,7 +35,7 @@ element selected element-icon {
 
 listview {
     padding: 4px;
-    spacing: 4px;
+    spacing: 6px;
     dynamic: true;
     columns: 4;
     layout: horizontal;
