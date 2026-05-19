@@ -1,43 +1,53 @@
 #!/bin/bash
 
-LIVE_DIR="/home/hamo/Pictures/Live wall"
-STATIC_DIR="/home/hamo/Pictures/Wallpapers"
-SCRIPT_DIR="/home/hamo/.config/hypr/Scripts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/wallpaper-config.sh"
+
 IPC_SOCKET="/tmp/mpv-wallpaper.sock"
-MONITOR="eDP-1"
+TRACKING_FILE="/tmp/current-static-wallpaper"
 
 ICON_VIDEO="󰎁"
 ICON_IMAGE="󰋩"
 ICON_CURRENT="●"
 ICON_INACTIVE="○"
 
+VIDEO_EXTS="*.{mp4,webm,MP4,WEBM}"
+IMAGE_EXTS="*.{png,jpg,jpeg,PNG,JPG,JPEG}"
+
+current_live=""
+current_static=""
+
 get_current_live() {
-    if [ -S "$IPC_SOCKET" ]; then
-        local pid
-        pid=$(pgrep -f "mpvpaper.*$MONITOR" 2>/dev/null | head -1)
-        if [ -n "$pid" ]; then
-            ps -p "$pid" -o args= 2>/dev/null | grep -oP "/home/hamo/Pictures/Live wall/\K[^.]+"
-        fi
-    fi
+    [ -S "$IPC_SOCKET" ] || return
+    local pid
+    pid=$(pgrep -f "mpvpaper.*$MONITOR" 2>/dev/null | head -1)
+    [ -n "$pid" ] && ps -p "$pid" -o args= 2>/dev/null | grep -oP "\Q$LIVE_DIR\E/[^.]+\.[^ ]+"
 }
 
-TRACKING_FILE="/tmp/current-static-wallpaper"
-
 get_current_static() {
-    if [ -f "$TRACKING_FILE" ]; then
-        cat "$TRACKING_FILE"
-    fi
+    [ -f "$TRACKING_FILE" ] && cat "$TRACKING_FILE"
+}
+
+collect_files() {
+    local dir="$1"
+    shift
+    local files=()
+    for pattern in "$@"; do
+        for f in "$dir"/$pattern; do
+            [ -f "$f" ] && files+=("$f")
+        done
+    done
+    echo "${files[@]}"
 }
 
 build_menu() {
     local mode="$1"
-    local current_live current_static
     current_live=$(get_current_live)
     current_static=$(get_current_static)
     local has_live=false
 
     if [ "$mode" = "all" ] || [ "$mode" = "live" ]; then
-        for f in "$LIVE_DIR"/*.{mp4,webm,MP4,WEBM}; do
+        for f in "$LIVE_DIR"/$VIDEO_EXTS; do
             [ -f "$f" ] || continue
             name=$(basename "$f")
             if [ "$name" = "$current_live" ]; then
@@ -54,7 +64,7 @@ build_menu() {
     fi
 
     if [ "$mode" = "all" ] || [ "$mode" = "static" ]; then
-        for f in "$STATIC_DIR"/*.{png,jpg,jpeg}; do
+        for f in "$STATIC_DIR"/$IMAGE_EXTS; do
             [ -f "$f" ] || continue
             name=$(basename "$f")
             if [ "$name" = "$current_static" ]; then
@@ -68,28 +78,90 @@ build_menu() {
     printf "───  ───\n"
     printf "󰅖  Clear Wallpaper\n"
     printf "󰑐  Random Wallpaper\n"
-    printf "  Open Wallpapers Folder\n"
+    printf "  Open Wallpaper Folder\n"
+    printf "󰋼  Change Folders\n"
+    printf "󰃣  Set as Default\n"
     printf "󰑓  Refresh\n"
 }
 
 resolve_file() {
     local name="$1"
-    for f in "$LIVE_DIR"/*.{mp4,webm,MP4,WEBM}; do
+    for f in "$LIVE_DIR"/$VIDEO_EXTS; do
         [ -f "$f" ] || continue
         b=$(basename "$f")
         [ "$b" = "$name" ] && echo "$f" && return
         [ "${b%.*}" = "$name" ] && echo "$f" && return
     done
-    for f in "$STATIC_DIR"/*.{png,jpg,jpeg,PNG,JPG,JPEG}; do
+    for f in "$STATIC_DIR"/$IMAGE_EXTS; do
         [ -f "$f" ] || continue
         b=$(basename "$f")
         [ "$b" = "$name" ] && echo "$f" && return
-    done
-    for f in "$STATIC_DIR"/*.{png,jpg,jpeg,PNG,JPG,JPEG}; do
-        [ -f "$f" ] || continue
-        b=$(basename "$f")
         [ "${b%.*}" = "$name" ] && echo "$f" && return
     done
+}
+
+choose_folder() {
+    local prompt="$1"
+    local choice
+    choice=$(zenity --file-selection --directory --title="$prompt" 2>/dev/null)
+    echo "$choice"
+}
+
+change_folders() {
+    local new_live new_static new_mon
+
+    new_live=$(choose_folder "Select Live Wallpaper Folder")
+    [ -z "$new_live" ] && return 1
+
+    new_static=$(choose_folder "Select Static Wallpaper Folder")
+    [ -z "$new_static" ] && return 1
+
+    new_mon=$(zenity --entry --title="Monitor" --text="Enter monitor name:" --entry-text="$MONITOR" 2>/dev/null)
+    [ -z "$new_mon" ] && new_mon="$MONITOR"
+
+    cat > "$SCRIPT_DIR/wallpaper-config.sh" << EOF
+LIVE_DIR="$new_live"
+STATIC_DIR="$new_static"
+MONITOR="$new_mon"
+EOF
+
+    LIVE_DIR="$new_live"
+    STATIC_DIR="$new_static"
+    MONITOR="$new_mon"
+
+    systemctl --user restart wallpaper-watcher.service 2>/dev/null
+
+    notify-send "Wallpaper" "Folders updated to:\nLive: $new_live\nStatic: $new_static"
+}
+
+set_default() {
+    local active=""
+
+    if [ -S "$IPC_SOCKET" ]; then
+        local pid
+        pid=$(pgrep -f "mpvpaper.*$MONITOR" 2>/dev/null | head -1)
+        if [ -n "$pid" ]; then
+            active=$(ps -p "$pid" -o args= 2>/dev/null | grep -oP "\Q$LIVE_DIR\E/[^ ]+" | head -1)
+        fi
+    fi
+
+    if [ -z "$active" ] && [ -f "$TRACKING_FILE" ]; then
+        local name
+        name=$(cat "$TRACKING_FILE")
+        [ -f "$STATIC_DIR/$name" ] && active="$STATIC_DIR/$name"
+    fi
+
+    if [ -z "$active" ]; then
+        notify-send "Wallpaper" "No active wallpaper to set as default"
+        return 1
+    fi
+
+    local escaped
+    escaped=$(printf '%s\n' "$active" | sed 's/[\/&]/\\&/g')
+    sed -i "s|^DEFAULT_WALLPAPER=.*|DEFAULT_WALLPAPER=\"$escaped\"|" "$SCRIPT_DIR/wallpaper-config.sh"
+
+    source "$SCRIPT_DIR/wallpaper-config.sh"
+    notify-send "Wallpaper" "Default set: $(basename "$active")"
 }
 
 show_picker() {
@@ -137,9 +209,19 @@ show_picker() {
             random_wallpaper
             return
             ;;
-        *"Open Wallpapers Folder"*)
+        *"Open Wallpaper Folder"*)
             thunar "$LIVE_DIR" &
             exit 0
+            ;;
+        *"Change Folders"*)
+            change_folders
+            show_picker "$mode"
+            return
+            ;;
+        *"Set as Default"*)
+            set_default
+            show_picker "$mode"
+            return
             ;;
         *"Refresh"*)
             show_picker "$mode"
@@ -153,25 +235,16 @@ show_picker() {
 
     local name
     name=$(echo "$chosen" | awk '{$1=$2=""; print $0}' | xargs)
-
     local filepath
     filepath=$(resolve_file "$name")
-
-    [ -z "$filepath" ] && exit 0
-
-    apply_wallpaper "$filepath"
+    [ -n "$filepath" ] && apply_wallpaper "$filepath"
 }
 
 random_wallpaper() {
     local files=()
-    for f in "$LIVE_DIR"/*.{mp4,webm,MP4,WEBM}; do
-        [ -f "$f" ] && files+=("$f")
-    done
-    for f in "$STATIC_DIR"/*.{png,jpg,jpeg,PNG,JPG,JPEG}; do
-        [ -f "$f" ] && files+=("$f")
-    done
+    for f in "$LIVE_DIR"/$VIDEO_EXTS; do [ -f "$f" ] && files+=("$f"); done
+    for f in "$STATIC_DIR"/$IMAGE_EXTS; do [ -f "$f" ] && files+=("$f"); done
     [ ${#files[@]} -eq 0 ] && notify-send "Wallpaper" "No wallpapers found" && exit 1
-
     local pick
     pick=${files[$RANDOM % ${#files[@]}]}
     apply_wallpaper "$pick"
@@ -180,7 +253,7 @@ random_wallpaper() {
 apply_wallpaper() {
     local file="$1"
     case "$file" in
-        *.mp4|*.webm)
+        *.mp4|*.webm|*.MP4|*.WEBM)
             "$SCRIPT_DIR/wallpaperctl.sh" stop 2>/dev/null
             name=$(basename "$file")
             mpvpaper -f -l bottom -o "--input-ipc-server=$IPC_SOCKET no-audio loop" "$MONITOR" "$file"

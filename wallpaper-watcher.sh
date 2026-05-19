@@ -1,8 +1,8 @@
 #!/bin/bash
 
-LIVE_DIR="/home/hamo/Pictures/Live wall"
-STATIC_DIR="/home/hamo/Pictures/Wallpapers"
-SCRIPT_DIR="/home/hamo/.config/hypr/Scripts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/wallpaper-config.sh"
+
 PID_FILE="/tmp/wallpaper-watcher.pid"
 
 cleanup() {
