@@ -17,8 +17,8 @@ next_file() {
     local dir="$1" mode="$2"
     local files=()
     case "$mode" in
-        video) mapfile -t files < <(ls "$dir"/*.mp4 2>/dev/null) ;;
-        image) mapfile -t files < <(ls "$dir"/*.{png,jpg,jpeg} 2>/dev/null) ;;
+        video) mapfile -t files < <(ls "$dir"/*.{mp4,webm,MP4,WEBM} 2>/dev/null) ;;
+        image) mapfile -t files < <(ls "$dir"/*.{png,jpg,jpeg,PNG,JPG,JPEG} 2>/dev/null) ;;
     esac
     local count=${#files[@]}
     [ "$count" -eq 0 ] && return 1

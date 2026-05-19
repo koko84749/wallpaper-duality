@@ -37,9 +37,9 @@ build_menu() {
     local has_live=false
 
     if [ "$mode" = "all" ] || [ "$mode" = "live" ]; then
-        for f in "$LIVE_DIR"/*.mp4; do
+        for f in "$LIVE_DIR"/*.{mp4,webm,MP4,WEBM}; do
             [ -f "$f" ] || continue
-            name=$(basename "$f" .mp4)
+            name=$(basename "$f")
             if [ "$name" = "$current_live" ]; then
                 printf "%s %s %s\\0icon\\x1fthumbnail://%s\n" "$ICON_CURRENT" "$ICON_VIDEO" "$name" "$f"
             else
@@ -74,17 +74,18 @@ build_menu() {
 
 resolve_file() {
     local name="$1"
-    for f in "$LIVE_DIR"/*.mp4; do
+    for f in "$LIVE_DIR"/*.{mp4,webm,MP4,WEBM}; do
         [ -f "$f" ] || continue
-        b=$(basename "$f" .mp4)
+        b=$(basename "$f")
         [ "$b" = "$name" ] && echo "$f" && return
+        [ "${b%.*}" = "$name" ] && echo "$f" && return
     done
-    for f in "$STATIC_DIR"/*.{png,jpg,jpeg}; do
+    for f in "$STATIC_DIR"/*.{png,jpg,jpeg,PNG,JPG,JPEG}; do
         [ -f "$f" ] || continue
         b=$(basename "$f")
         [ "$b" = "$name" ] && echo "$f" && return
     done
-    for f in "$STATIC_DIR"/*.{png,jpg,jpeg}; do
+    for f in "$STATIC_DIR"/*.{png,jpg,jpeg,PNG,JPG,JPEG}; do
         [ -f "$f" ] || continue
         b=$(basename "$f")
         [ "${b%.*}" = "$name" ] && echo "$f" && return
@@ -163,10 +164,10 @@ show_picker() {
 
 random_wallpaper() {
     local files=()
-    for f in "$LIVE_DIR"/*.mp4; do
+    for f in "$LIVE_DIR"/*.{mp4,webm,MP4,WEBM}; do
         [ -f "$f" ] && files+=("$f")
     done
-    for f in "$STATIC_DIR"/*.{png,jpg,jpeg}; do
+    for f in "$STATIC_DIR"/*.{png,jpg,jpeg,PNG,JPG,JPEG}; do
         [ -f "$f" ] && files+=("$f")
     done
     [ ${#files[@]} -eq 0 ] && notify-send "Wallpaper" "No wallpapers found" && exit 1
@@ -179,13 +180,13 @@ random_wallpaper() {
 apply_wallpaper() {
     local file="$1"
     case "$file" in
-        *.mp4)
+        *.mp4|*.webm)
             "$SCRIPT_DIR/wallpaperctl.sh" stop 2>/dev/null
-            name=$(basename "$file" .mp4)
+            name=$(basename "$file")
             mpvpaper -f -l bottom -o "--input-ipc-server=$IPC_SOCKET no-audio loop" "$MONITOR" "$file"
             notify-send "Wallpaper" "Live: $name"
             ;;
-        *.png|*.jpg|*.jpeg)
+        *.png|*.jpg|*.jpeg|*.PNG|*.JPG|*.JPEG)
             "$SCRIPT_DIR/wallpaperctl.sh" stop 2>/dev/null
             if ! pgrep -x "awww-daemon" >/dev/null 2>&1; then
                 nohup awww-daemon >/dev/null 2>&1 &
