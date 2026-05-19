@@ -262,9 +262,6 @@ ICON_IMAGE="\xf0\x9f\x96\xbc"
 ICON_CURRENT="\xe2\x97\x89"
 ICON_INACTIVE="\xe2\x97\x8b"
 
-VIDEO_EXTS="*.{mp4,webm,MP4,WEBM}"
-IMAGE_EXTS="*.{png,jpg,jpeg,PNG,JPG,JPEG}"
-
 current_live=""
 current_static=""
 
@@ -272,7 +269,7 @@ get_current_live() {
     [ -S "$IPC_SOCKET" ] || return
     local pid
     pid=$(pgrep -f "mpvpaper.*$MONITOR" 2>/dev/null | head -1)
-    [ -n "$pid" ] && ps -p "$pid" -o args= 2>/dev/null | grep -oP "\Q$LIVE_DIR\E/[^.]+\.[^ ]+"
+    [ -n "$pid" ] && ps -p "$pid" -o args= 2>/dev/null | grep -oP "\Q$LIVE_DIR\E/[^ ]+(?=\s|$)"
 }
 
 get_current_static() {
@@ -286,7 +283,7 @@ build_menu() {
     local has_live=false
 
     if [ "$mode" = "all" ] || [ "$mode" = "live" ]; then
-        for f in "$LIVE_DIR"/$VIDEO_EXTS; do
+        for f in "$LIVE_DIR"/*.mp4 "$LIVE_DIR"/*.webm "$LIVE_DIR"/*.MP4 "$LIVE_DIR"/*.WEBM; do
             [ -f "$f" ] || continue
             name=$(basename "$f")
             if [ "$name" = "$current_live" ]; then
@@ -303,7 +300,7 @@ build_menu() {
     fi
 
     if [ "$mode" = "all" ] || [ "$mode" = "static" ]; then
-        for f in "$STATIC_DIR"/$IMAGE_EXTS; do
+        for f in "$STATIC_DIR"/*.png "$STATIC_DIR"/*.jpg "$STATIC_DIR"/*.jpeg "$STATIC_DIR"/*.PNG "$STATIC_DIR"/*.JPG "$STATIC_DIR"/*.JPEG; do
             [ -f "$f" ] || continue
             name=$(basename "$f")
             if [ "$name" = "$current_static" ]; then
@@ -324,13 +321,13 @@ build_menu() {
 
 resolve_file() {
     local name="$1"
-    for f in "$LIVE_DIR"/$VIDEO_EXTS; do
+    for f in "$LIVE_DIR"/*.mp4 "$LIVE_DIR"/*.webm "$LIVE_DIR"/*.MP4 "$LIVE_DIR"/*.WEBM; do
         [ -f "$f" ] || continue
         b=$(basename "$f")
         [ "$b" = "$name" ] && echo "$f" && return
         [ "${b%.*}" = "$name" ] && echo "$f" && return
     done
-    for f in "$STATIC_DIR"/$IMAGE_EXTS; do
+    for f in "$STATIC_DIR"/*.png "$STATIC_DIR"/*.jpg "$STATIC_DIR"/*.jpeg "$STATIC_DIR"/*.PNG "$STATIC_DIR"/*.JPG "$STATIC_DIR"/*.JPEG; do
         [ -f "$f" ] || continue
         b=$(basename "$f")
         [ "$b" = "$name" ] && echo "$f" && return
@@ -424,8 +421,8 @@ show_picker() {
 
 random_wallpaper() {
     local files=()
-    for f in "$LIVE_DIR"/$VIDEO_EXTS; do [ -f "$f" ] && files+=("$f"); done
-    for f in "$STATIC_DIR"/$IMAGE_EXTS; do [ -f "$f" ] && files+=("$f"); done
+    for f in "$LIVE_DIR"/*.mp4 "$LIVE_DIR"/*.webm "$LIVE_DIR"/*.MP4 "$LIVE_DIR"/*.WEBM; do [ -f "$f" ] && files+=("$f"); done
+    for f in "$STATIC_DIR"/*.png "$STATIC_DIR"/*.jpg "$STATIC_DIR"/*.jpeg "$STATIC_DIR"/*.PNG "$STATIC_DIR"/*.JPG "$STATIC_DIR"/*.JPEG; do [ -f "$f" ] && files+=("$f"); done
     [ ${#files[@]} -eq 0 ] && notify-send "Wallpaper" "No wallpapers found" && exit 1
     local pick
     pick=${files[$RANDOM % ${#files[@]}]}
