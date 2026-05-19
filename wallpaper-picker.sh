@@ -81,8 +81,11 @@ build_menu() {
     printf "───  ───\n"
     printf "󰅖  Clear Wallpaper\n"
     printf "󰑐  Random Wallpaper\n"
-    printf "  Open Wallpaper Folder\n"
-    printf "󰋼  Change Folders\n"
+    printf "󰇮  Open Live Folder\n"
+    printf "󰇮  Open Static Folder\n"
+    printf "󰋼  Change Live Folder\n"
+    printf "󰋼  Change Static Folder\n"
+    printf "󰋼  Change Monitor\n"
     printf "󰃣  Set as Default\n"
     printf "󰑓  Refresh\n"
 }
@@ -103,38 +106,28 @@ resolve_file() {
     done
 }
 
-choose_folder() {
-    local prompt="$1"
-    local choice
-    choice=$(zenity --file-selection --directory --title="$prompt" 2>/dev/null)
-    echo "$choice"
+change_monitor() {
+    local new_mon
+    new_mon=$(zenity --entry --title="Monitor" --text="Enter monitor name:" --entry-text="$MONITOR" 2>/dev/null)
+    [ -z "$new_mon" ] && return 1
+    local escaped
+    escaped=$(printf '%s\n' "$new_mon" | sed 's/[\/&]/\\&/g')
+    sed -i "s/^MONITOR=.*/MONITOR=\"$escaped\"/" "$SCRIPT_DIR/wallpaper-config.sh"
+    MONITOR="$new_mon"
+    notify-send "Wallpaper" "Monitor changed to: $new_mon"
 }
 
-change_folders() {
-    local new_live new_static new_mon
-
-    new_live=$(choose_folder "Select Live Wallpaper Folder")
-    [ -z "$new_live" ] && return 1
-
-    new_static=$(choose_folder "Select Static Wallpaper Folder")
-    [ -z "$new_static" ] && return 1
-
-    new_mon=$(zenity --entry --title="Monitor" --text="Enter monitor name:" --entry-text="$MONITOR" 2>/dev/null)
-    [ -z "$new_mon" ] && new_mon="$MONITOR"
-
-    cat > "$SCRIPT_DIR/wallpaper-config.sh" << EOF
-LIVE_DIR="$new_live"
-STATIC_DIR="$new_static"
-MONITOR="$new_mon"
-EOF
-
-    LIVE_DIR="$new_live"
-    STATIC_DIR="$new_static"
-    MONITOR="$new_mon"
-
+change_one_folder() {
+    local var="$1" prompt="$2"
+    local new_dir
+    new_dir=$(zenity --file-selection --directory --title="$prompt" 2>/dev/null)
+    [ -z "$new_dir" ] && return 1
+    local escaped
+    escaped=$(printf '%s\n' "$new_dir" | sed 's/[\/&]/\\&/g')
+    sed -i "s|^$var=.*|$var=\"$escaped\"|" "$SCRIPT_DIR/wallpaper-config.sh"
+    declare "$var=$new_dir"
     systemctl --user restart wallpaper-watcher.service 2>/dev/null
-
-    notify-send "Wallpaper" "Folders updated to:\nLive: $new_live\nStatic: $new_static"
+    notify-send "Wallpaper" "$(echo "$var" | tr '_' ' ') changed to: $(basename "$new_dir")"
 }
 
 set_default() {
@@ -212,12 +205,26 @@ show_picker() {
             random_wallpaper
             return
             ;;
-        *"Open Wallpaper Folder"*)
+        *"Open Live Folder"*)
             thunar "$LIVE_DIR" &
             exit 0
             ;;
-        *"Change Folders"*)
-            change_folders
+        *"Open Static Folder"*)
+            thunar "$STATIC_DIR" &
+            exit 0
+            ;;
+        *"Change Live Folder"*)
+            change_one_folder "LIVE_DIR" "Select Live Wallpaper Folder"
+            show_picker "$mode"
+            return
+            ;;
+        *"Change Static Folder"*)
+            change_one_folder "STATIC_DIR" "Select Static Wallpaper Folder"
+            show_picker "$mode"
+            return
+            ;;
+        *"Change Monitor"*)
+            change_monitor
             show_picker "$mode"
             return
             ;;

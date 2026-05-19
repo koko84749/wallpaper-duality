@@ -508,21 +508,22 @@ SVCEOF
 @theme "/usr/share/rofi/themes/android_notification.rasi"
 
 * {
-    font: "JetBrainsMonoNL Nerd Font 11";
+    font: "JetBrainsMonoNL Nerd Font 9";
 }
 
 window {
-    width: 600px;
+    width: 900px;
 }
 
 element {
-    padding: 6px 8px;
+    padding: 4px;
     orientation: horizontal;
+    border-radius: 6px;
 }
 
 element-icon {
-    padding: 0 8px 0 0;
-    size: 2.4em;
+    padding: 0 4px 0 0;
+    size: 3.2em;
     vertical-align: 0.5;
 }
 
@@ -542,23 +543,26 @@ element selected element-icon {
 
 listview {
     padding: 4px;
-    spacing: 2px;
+    spacing: 4px;
     dynamic: true;
+    columns: 4;
+    layout: horizontal;
 }
 
 mainbox {
-    padding: 8px;
+    padding: 6px;
+    spacing: 4px;
 }
 
 message {
     background: transparent;
-    font: "JetBrainsMonoNL Nerd Font 9";
-    padding: 4px 12px;
+    font: "JetBrainsMonoNL Nerd Font 8";
+    padding: 2px 8px;
     text-color: #a6adc8;
 }
 
 inputbar {
-    padding: 6px;
+    padding: 4px;
 }
 RASILEOF
 
