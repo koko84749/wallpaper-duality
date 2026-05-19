@@ -687,6 +687,56 @@ setup_waybar() {
     echo "  Middle click: Toggle pause (live only)"
 }
 
+setup_noctalia() {
+    echo ""
+    info "Noctalia-shell plugin (optional)..."
+
+    local plugin_dir="$HOME/.config/noctalia/plugins/wallpaper-duality"
+    local plugin_source="$(dirname "$0")/noctalia-plugin/wallpaper-duality"
+
+    if [ ! -d "$plugin_source" ]; then
+        warn "Plugin source not found at $plugin_source — skipping"
+        return
+    fi
+
+    mkdir -p "$plugin_dir"
+    cp "$plugin_source/manifest.json" "$plugin_dir/"
+    cp "$plugin_source/Main.qml" "$plugin_dir/"
+    cp "$plugin_source/BarWidget.qml" "$plugin_dir/"
+    cp "$plugin_source/Settings.qml" "$plugin_dir/"
+
+    # Add to plugins.json if not present
+    local plugins_json="$HOME/.config/noctalia/plugins.json"
+    if [ -f "$plugins_json" ]; then
+        if ! grep -q "wallpaper-duality" "$plugins_json" 2>/dev/null; then
+            sed -i '/"version": 2/i\        "wallpaper-duality": {\n            "enabled": true,\n            "sourceUrl": "https:\/\/github.com\/koko84749\/wallpaper-duality"\n        },' "$plugins_json"
+            log "Added wallpaper-duality to noctalia plugins.json"
+        else
+            warn "wallpaper-duality already in plugins.json — skipping"
+        fi
+    fi
+
+    # Check if settings.json exists and add widget to bar if not present
+    local settings_json="$HOME/.config/noctalia/settings.json"
+    if [ -f "$settings_json" ]; then
+        if ! grep -q "plugin:wallpaper-duality" "$settings_json" 2>/dev/null; then
+            # Insert before ControlCenter in right section
+            sed -i '/"id": "Brightness"/a\                },\n                {\n                    "defaultSettings": {\n                        "refreshInterval": 5,\n                        "showTooltip": true\n                    },\n                    "id": "plugin:wallpaper-duality"' "$settings_json"
+            log "Added wallpaper-duality widget to noctalia bar"
+        else
+            warn "wallpaper-duality widget already in noctalia bar — skipping"
+        fi
+    fi
+
+    log "Noctalia-shell plugin installed!"
+    log "  Plugin: $plugin_dir"
+    echo ""
+    echo "  Add 'plugin:wallpaper-duality' to your bar widgets in"
+    echo "  noctalia settings (Settings → Bar → Widgets) or edit"
+    echo "  ~/.config/noctalia/settings.json manually."
+    echo "  Restart noctalia-shell (qs -c noctalia-shell) to apply."
+}
+
 finalize() {
     echo ""
     info "Making scripts executable..."
@@ -739,6 +789,12 @@ echo ""
 read -r -p "  Set up Waybar wallpaper module? (y/N): " setup_waybar_opt
 if [[ "$setup_waybar_opt" =~ ^[Yy]$ ]]; then
     setup_waybar
+fi
+
+echo ""
+read -r -p "  Set up Noctalia-shell wallpaper plugin? (y/N): " setup_noctalia_opt
+if [[ "$setup_noctalia_opt" =~ ^[Yy]$ ]]; then
+    setup_noctalia
 fi
 
 finalize

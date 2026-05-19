@@ -3,7 +3,7 @@
 A complete wallpaper management system with keybind controls and a Rofi-based visual picker with thumbnails.  
 
 **New in v2.0:** Auto-detect new wallpapers with inotify watcher + Refresh option in the picker.
-**New in v2.1:** Optional Waybar module with live wallpaper status indicators and click/scroll controls.
+**New in v2.1:** Optional Waybar module and Noctalia-shell plugin with live wallpaper status indicators and click/scroll controls.
 
 ## Requirements
 
@@ -25,6 +25,9 @@ sudo pacman -S inotify-tools
 
 # Waybar module (optional — for bar status indicator)
 sudo pacman -S waybar
+
+# Noctalia-shell plugin (optional — for noctalia bar widget)
+yay -S noctalia-qs
 ```
 
 ## Directory Structure
@@ -44,6 +47,12 @@ sudo pacman -S waybar
 ~/.config/waybar/
 ├── config.jsonc             # Waybar config (optional, with wallpaper module)
 └── style.css                # Waybar style (optional)
+
+~/.config/noctalia/plugins/wallpaper-duality/  # Noctalia-shell plugin (optional)
+├── manifest.json
+├── Main.qml
+├── BarWidget.qml
+└── Settings.qml
 
 ~/Pictures/Live wall/        # Put .mp4/.webm video files here
 ~/Pictures/Wallpapers/       # Put .png/.jpg/.jpeg image files here
@@ -602,6 +611,53 @@ Then add `exec-once = waybar` to your `~/.config/hypr/startup.conf`.
 ### Status Indicators
 
 | Icon | Meaning |
+|------|---------|
+| `󰎁 name` | Live wallpaper playing |
+| `󰋩 name` | Static wallpaper active |
+| `󰱟 none` | No wallpaper set |
+
+## Noctalia-shell Plugin (Optional)
+
+If you use [Noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) (Quickshell-based desktop shell), a wallpaper status bar widget is included:
+
+```
+noctalia-plugin/wallpaper-duality/
+├── manifest.json
+├── Main.qml
+├── BarWidget.qml
+└── Settings.qml
+```
+
+The installer will ask if you want to set it up — or install manually:
+
+```bash
+mkdir -p ~/.config/noctalia/plugins/wallpaper-duality
+cp noctalia-plugin/wallpaper-duality/* ~/.config/noctalia/plugins/wallpaper-duality/
+```
+
+Then add to `~/.config/noctalia/plugins.json`:
+
+```json
+"wallpaper-duality": {
+    "enabled": true,
+    "sourceUrl": "https://github.com/koko84749/wallpaper-duality"
+}
+```
+
+And add `"plugin:wallpaper-duality"` to your bar widgets in `~/.config/noctalia/settings.json` under `bar.widgets.right`. Restart noctalia-shell with `qs -c noctalia-shell`.
+
+### Features
+
+| Action | Result |
+|--------|--------|
+| **Left click** | Opens the Rofi wallpaper picker |
+| **Right click** | Context menu (Random, Toggle pause, Settings) |
+| **Scroll up** | Cycles to next live wallpaper |
+| **Scroll down** | Cycles to next static wallpaper |
+
+### Status Indicators
+
+| Text | Meaning |
 |------|---------|
 | `󰎁 name` | Live wallpaper playing |
 | `󰋩 name` | Static wallpaper active |

@@ -1,0 +1,25 @@
+{
+  "id": "wallpaper-duality",
+  "name": "Wallpaper Duality",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "3.6.0",
+  "author": "koko84749",
+  "license": "MIT",
+  "description": "Shows current wallpaper status (live/static) with picker and cycle controls",
+  "tags": ["Bar", "Panel", "Utility"],
+  "repository": "https://github.com/koko84749/wallpaper-duality",
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "refreshInterval": 5,
+      "showTooltip": true
+    }
+  }
+}
