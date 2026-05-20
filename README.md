@@ -71,6 +71,8 @@ It handles everything automatically:
 - Reloads Hyprland when done
 
 ```bash
+git clone https://github.com/koko84749/wallpaper-duality.git
+cd wallpaper-duality
 chmod +x install-wallpapers.sh
 ./install-wallpapers.sh
 ```
