@@ -28,7 +28,7 @@ Item {
 
   Process {
     id: proc
-    command: ["sh", "-c", "~/.config/hypr/Scripts/wallpaper-waybar.sh"]
+    command: ["sh", "-c", "/home/hamo/.config/hypr/Scripts/wallpaper-waybar.sh"]
     running: true
 
     stdout: SplitParser {
@@ -72,7 +72,7 @@ Item {
 
     onClicked: mouse => {
       if (mouse.button === Qt.LeftButton) {
-        Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaper-picker.sh"])
+        Process.exec("sh", ["-c", "/home/hamo/.config/hypr/Scripts/wallpaper-picker.sh"])
       } else if (mouse.button === Qt.RightButton) {
         PanelService.showContextMenu(contextMenu, root, screen)
       }
@@ -80,9 +80,9 @@ Item {
 
     onWheel: wheel => {
       if (wheel.angleDelta.y > 0) {
-        Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaperctl.sh live"])
+        Process.exec("sh", ["-c", "/home/hamo/.config/hypr/Scripts/wallpaperctl.sh live"])
       } else {
-        Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaperctl.sh static"])
+        Process.exec("sh", ["-c", "/home/hamo/.config/hypr/Scripts/wallpaperctl.sh static"])
       }
     }
   }
@@ -101,11 +101,11 @@ Item {
       contextMenu.close()
       PanelService.closeContextMenu(screen)
       if (action === "random-wallpaper")
-        Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaper-picker.sh random"])
+        Process.exec("sh", ["-c", "/home/hamo/.config/hypr/Scripts/wallpaper-picker.sh random"])
       else if (action === "toggle-pause")
-        Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaperctl.sh toggle"])
+        Process.exec("sh", ["-c", "/home/hamo/.config/hypr/Scripts/wallpaperctl.sh toggle"])
       else if (action === "open-picker")
-        Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaper-picker.sh"])
+        Process.exec("sh", ["-c", "/home/hamo/.config/hypr/Scripts/wallpaper-picker.sh"])
       else if (action === "widget-settings")
         BarService.openPluginSettings(screen, pluginApi.manifest)
     }
