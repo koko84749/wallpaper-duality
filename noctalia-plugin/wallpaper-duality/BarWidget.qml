@@ -37,7 +37,7 @@ Item {
     running: true
 
     stdout: SplitParser {
-      onData: data => {
+      onRead: data => {
         try {
           var obj = JSON.parse(data.trim())
           root.statusText = obj.text || ""
