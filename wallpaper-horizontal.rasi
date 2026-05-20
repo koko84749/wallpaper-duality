@@ -1,3 +1,8 @@
+// ⚠ BETA: Horizontal orientation variant
+// Replace wallpaper.rasi with this file for the classic horizontal layout.
+// To use: cp wallpaper-horizontal.rasi wallpaper.rasi
+// Or in wallpaper-picker.sh, change -theme "$SCRIPT_DIR/wallpaper.rasi" to -theme "$SCRIPT_DIR/wallpaper-horizontal.rasi"
+
 @theme "/usr/share/rofi/themes/android_notification.rasi"
 
 * {
@@ -5,21 +10,22 @@
 }
 
 window {
-    width: 500px;
+    width: 600px;
 }
 
 element {
-    padding: 8px;
-    orientation: vertical;
+    padding: 6px 8px;
+    orientation: horizontal;
 }
 
 element-icon {
-    padding: 0 0 4px 0;
-    size: 3.0em;
+    padding: 0 8px 0 0;
+    size: 2.4em;
+    vertical-align: 0.5;
 }
 
 element-text {
-    horizontal-align: 0.5;
+    vertical-align: 0.5;
 }
 
 element selected {
@@ -34,9 +40,8 @@ element selected element-icon {
 
 listview {
     padding: 4px;
-    spacing: 4px;
+    spacing: 2px;
     dynamic: true;
-    orientation: vertical;
 }
 
 mainbox {
