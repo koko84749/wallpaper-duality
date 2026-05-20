@@ -22,9 +22,9 @@ Item {
 
   property string statusText: ""
   property string statusClass: "none"
-  property string statusIcon: ""
+  property string statusIcon: "󰱟"
 
-  implicitWidth: row.implicitWidth + 12
+  implicitWidth: 24
   implicitHeight: capsuleHeight
 
   function refresh() {
@@ -66,7 +66,7 @@ Item {
     spacing: 4
 
     NText {
-      text: root.statusText
+      text: root.statusIcon
       font.pixelSize: Style.getBarFontSizeForDensity(Settings.getBarDensityForScreen(screenName), capsuleHeight, false) - 1
       color: root.statusClass === "live" ? "#ffb3ad"
            : root.statusClass === "static" ? "#e1c28c"
