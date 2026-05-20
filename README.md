@@ -37,12 +37,14 @@ yay -S noctalia-qs
 
 ```
 ~/.config/hypr/Scripts/
-├── wallpaper-config.sh      # Shared configuration (paths, monitor)
-├── wallpaperctl.sh          # Core control script (cycle, toggle, apply)
-├── wallpaper-picker.sh      # Rofi visual picker with thumbnails
-├── wallpaper-watcher.sh     # Auto-detect new wallpapers (inotify daemon)
-├── wallpaper-waybar.sh      # Waybar status module (optional)
-└── wallpaper.rasi           # Rofi theme for the picker
+├── wallpaper-config.sh        # Shared configuration (paths, monitor, API keys)
+├── wallpaperctl.sh            # Core control script (cycle, toggle, apply)
+├── wallpaper-picker.sh        # Rofi visual picker with thumbnails
+├── wallpaper-watcher.sh       # Auto-detect new wallpapers (inotify daemon)
+├── wallpaper-downloader.sh    # Search & download from Unsplash/Wallhaven/Wallsflow
+├── wallpaper-sorter.sh        # Auto-detect & sort wallpapers by type
+├── wallpaper-waybar.sh        # Waybar status module (optional)
+└── wallpaper.rasi             # Rofi theme for the picker
 
 ~/.config/systemd/user/
 └── wallpaper-watcher.service  # systemd user service for the watcher
@@ -547,6 +549,7 @@ hyprctl reload
 | `SUPER + SHIFT + V` | Cycle to next live wallpaper |
 | `SUPER + P` | Cycle to next static wallpaper |
 | `SUPER + SHIFT + P` | Open Rofi wallpaper picker with thumbnails |
+| `SUPER + SHIFT + D` | Open wallpaper downloader (search Unsplash/Wallhaven/Wallsflow) |
 | (background) | Wallpaper watcher auto-detects new files via inotify |
 
 ### In the Picker
@@ -667,6 +670,64 @@ And add `"plugin:wallpaper-duality"` to your bar widgets in `~/.config/noctalia/
 | `󰎁 name` | Live wallpaper playing |
 | `󰋩 name` | Static wallpaper active |
 | `󰱟 none` | No wallpaper set |
+
+## Downloader & Sorter (v2.2)
+
+Two new scripts for managing your wallpaper collection.
+
+### wallpaper-downloader.sh
+
+Search and download wallpapers from the picker menu or directly via keybind `SUPER + SHIFT + D`.
+
+**Sources:**
+
+| Source | Type | API Key | Features |
+|--------|------|---------|----------|
+| **Wallsflow** | Live (MP4) | None | Browse 15 categories (anime, games, nature, cars, etc.) or search by keyword |
+| **Unsplash** | Static | Required | High-quality photos, search by keyword or photo ID |
+| **Wallhaven** | Static | Required | Wallpaper community, search by keyword or wallpaper ID |
+
+**Workflow:**
+1. Select source and search mode
+2. Enter keyword (or category for Wallsflow, or photo/wallpaper ID for Unsplash/Wallhaven)
+3. Browse results with thumbnails in the Rofi picker
+4. Select one to download — videos go to `LIVE_DIR`, images to `STATIC_DIR`
+
+**API Keys:**
+
+Required only for Unsplash and Wallhaven. You'll be prompted on first use:
+- **Unsplash**: `https://unsplash.com/developers` → Register app → Get Access Key
+- **Wallhaven**: `https://wallhaven.cc/settings/account` → Generate API Key
+
+Keys are stored in `wallpaper-config.sh`.
+
+### wallpaper-sorter.sh
+
+Auto-detects file type and sorts wallpapers into the correct directory.
+
+```
+Usage: wallpaper-sorter.sh [OPTION]
+
+  (no args)   Scan both directories and sort misplaced files
+  --fix       Deep scan using MIME type detection (more thorough)
+  -w, --watch Watch directories and auto-sort new files
+  --help      Show help
+```
+
+**How it works:**
+- Checks file extension first (mp4, webm → video; png, jpg → image)
+- Falls back to MIME type detection using `file` command
+- Moves videos to `LIVE_DIR`, images to `STATIC_DIR`
+- Handles filename conflicts by appending a timestamp
+
+**From the picker**: Select "Sort Wallpapers by Type" to run a one-time sort.
+
+> **Adding a new download source:**
+> 1. Open `wallpaper-downloader.sh`
+> 2. Create a function `new_source_search(keyword)` that fetches results and writes them to `$RESULTS_FILE` in format: `Title|DirectURL|ThumbnailURL|Filename`
+> 3. Create a `new_source_by_code(code)` function if code lookup is supported
+> 4. Add the source options to the `source_menu()` case statement
+> 5. Add API key variable to `wallpaper-config.sh` if needed
 
 ## Notes
 

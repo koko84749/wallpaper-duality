@@ -88,6 +88,9 @@ build_menu() {
     printf "󰋼  Change Monitor\n"
     printf "󰃣  Set as Default\n"
     printf "󰑓  Refresh\n"
+    printf "─── 󰑭 ───\n"
+    printf "󱧕  Download Wallpapers\n"
+    printf "󰄾  Sort Wallpapers by Type\n"
 }
 
 resolve_file() {
@@ -234,6 +237,16 @@ show_picker() {
             return
             ;;
         *"Refresh"*)
+            show_picker "$mode"
+            return
+            ;;
+        *"Download Wallpapers"*)
+            "$SCRIPT_DIR/wallpaper-downloader.sh"
+            show_picker "$mode"
+            return
+            ;;
+        *"Sort Wallpapers by Type"*)
+            "$SCRIPT_DIR/wallpaper-sorter.sh"
             show_picker "$mode"
             return
             ;;

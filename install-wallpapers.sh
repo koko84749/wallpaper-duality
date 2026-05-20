@@ -164,6 +164,12 @@ LIVE_DIR="__LIVE_DIR__"
 STATIC_DIR="__STATIC_DIR__"
 MONITOR="__MONITOR__"
 DEFAULT_WALLPAPER=""
+
+# API Keys for wallpaper downloader
+# Unsplash: https://unsplash.com/developers
+UNSPLASH_ACCESS_KEY=""
+# Wallhaven: https://wallhaven.cc/settings/account
+WALLHAVEN_API_KEY=""
 CONFIGEOF
 
     # ─── wallpaperctl.sh ───
@@ -600,6 +606,14 @@ RASILEOF
     sed -i "s|__STATIC_DIR__|$static_esc|g" "$SCRIPT_DIR/wallpaper-config.sh"
     sed -i "s|__MONITOR__|$MONITOR|g" "$SCRIPT_DIR/wallpaper-config.sh"
 
+    # ─── wallpaper-downloader.sh ───
+    cp "$(dirname "$0")/wallpaper-downloader.sh" "$SCRIPT_DIR/wallpaper-downloader.sh"
+    chmod +x "$SCRIPT_DIR/wallpaper-downloader.sh"
+
+    # ─── wallpaper-sorter.sh ───
+    cp "$(dirname "$0")/wallpaper-sorter.sh" "$SCRIPT_DIR/wallpaper-sorter.sh"
+    chmod +x "$SCRIPT_DIR/wallpaper-sorter.sh"
+
     chmod +x "$SCRIPT_DIR/wallpaperctl.sh"
     chmod +x "$SCRIPT_DIR/wallpaper-picker.sh"
     chmod +x "$SCRIPT_DIR/wallpaper-watcher.sh"
@@ -608,6 +622,8 @@ RASILEOF
     log "Created: $SCRIPT_DIR/wallpaperctl.sh"
     log "Created: $SCRIPT_DIR/wallpaper-picker.sh"
     log "Created: $SCRIPT_DIR/wallpaper-watcher.sh"
+    log "Created: $SCRIPT_DIR/wallpaper-downloader.sh"
+    log "Created: $SCRIPT_DIR/wallpaper-sorter.sh"
     log "Created: $SCRIPT_DIR/wallpaper.rasi"
     log "Created: $HOME/.config/systemd/user/wallpaper-watcher.service"
 }
@@ -624,6 +640,7 @@ bind = SUPER, V, exec, \$HOME/.config/hypr/Scripts/wallpaperctl.sh toggle      #
 bind = SUPER SHIFT, V, exec, \$HOME/.config/hypr/Scripts/wallpaperctl.sh live   #\"Wallpaper Live\"
 bind = SUPER, P, exec, \$HOME/.config/hypr/Scripts/wallpaperctl.sh static       #\"Wallpaper Static\"
 bind = SUPER SHIFT, P, exec, \$HOME/.config/hypr/Scripts/wallpaper-picker.sh    #\"Wallpaper Picker\"
+bind = SUPER SHIFT, D, exec, \$HOME/.config/hypr/Scripts/wallpaper-downloader.sh    #\"Wallpaper Downloader\"
 "
 
     if grep -q "wallpaper-picker.sh\|wallpaperctl.sh" "$kb_file" 2>/dev/null; then
@@ -758,7 +775,7 @@ setup_noctalia() {
 finalize() {
     echo ""
     info "Making scripts executable..."
-    chmod +x "$SCRIPT_DIR/wallpaperctl.sh" "$SCRIPT_DIR/wallpaper-picker.sh" "$SCRIPT_DIR/wallpaper-watcher.sh" 2>/dev/null
+    chmod +x "$SCRIPT_DIR/wallpaperctl.sh" "$SCRIPT_DIR/wallpaper-picker.sh" "$SCRIPT_DIR/wallpaper-watcher.sh" "$SCRIPT_DIR/wallpaper-downloader.sh" "$SCRIPT_DIR/wallpaper-sorter.sh" 2>/dev/null
 
     systemctl --user daemon-reload 2>/dev/null
     systemctl --user enable --now wallpaper-watcher.service 2>/dev/null && \
@@ -786,11 +803,14 @@ finalize() {
     echo "     SUPER + SHIFT + P → Open wallpaper picker"
     echo ""
     echo "  In the picker:"
-    echo "  'Set as Default'    → Save current wallpaper for auto-start"
-    echo "  'Change Folders'    → Pick different wallpaper directories"
-    echo "  'Refresh' (Alt+5)   → Re-scan directories"
+    echo "  'Set as Default'          → Save current wallpaper for auto-start"
+    echo "  'Change Folders'          → Pick different wallpaper directories"
+    echo "  'Refresh' (Alt+5)         → Re-scan directories"
+    echo "  'Download Wallpapers'     → Search & download from Unsplash/Wallhaven/Wallsflow"
+    echo "  'Sort Wallpapers by Type' → Auto-detect & sort videos/images to correct dirs"
     echo ""
     echo "  Wallpaper watcher running (systemd) — auto-notifies on new files"
+    echo "  Downloader keybind: SUPER + SHIFT + D"
     echo ""
     echo "  Run this installer again to reconfigure paths."
 }
