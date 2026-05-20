@@ -5,17 +5,17 @@
 }
 
 window {
-    width: 500px;
+    width: 480px;
 }
 
 element {
-    padding: 8px;
+    padding: 4px;
     orientation: vertical;
 }
 
 element-icon {
-    padding: 0 0 4px 0;
-    size: 3.0em;
+    padding: 0 0 2px 0;
+    size: 2.0em;
 }
 
 element-text {
@@ -34,22 +34,22 @@ element selected element-icon {
 
 listview {
     padding: 4px;
-    spacing: 4px;
-    dynamic: true;
+    spacing: 2px;
+    lines: 6;
     orientation: vertical;
 }
 
 mainbox {
-    padding: 8px;
+    padding: 6px;
 }
 
 message {
     background: transparent;
     font: "JetBrainsMonoNL Nerd Font 9";
-    padding: 4px 12px;
+    padding: 2px 8px;
     text-color: #a6adc8;
 }
 
 inputbar {
-    padding: 6px;
+    padding: 4px;
 }
