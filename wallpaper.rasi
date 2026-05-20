@@ -10,7 +10,7 @@ window {
 
 element {
     padding: 6px 8px;
-    orientation: horizontal;
+    orientation: vertical;
 }
 
 element-icon {
