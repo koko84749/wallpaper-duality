@@ -20,16 +20,11 @@ Item {
   readonly property string screenName: screen?.name ?? ""
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
 
-  property string statusText: ""
-  property string statusClass: "none"
-  property string statusIcon: "󰱟"
+  property string statusIcon: "󰋩"
+  property string statusClass: "static"
 
   implicitWidth: 24
   implicitHeight: capsuleHeight
-
-  function refresh() {
-    proc.running = true
-  }
 
   Process {
     id: proc
@@ -40,10 +35,9 @@ Item {
       onRead: data => {
         try {
           var obj = JSON.parse(data.trim())
-          root.statusText = obj.text || ""
-          root.statusClass = obj.class || "none"
-          var parts = root.statusText.split(" ")
+          var parts = (obj.text || "󰱟").split(" ")
           root.statusIcon = parts.length > 0 ? parts[0] : "󰱟"
+          root.statusClass = obj.class || "none"
         } catch (e) {}
       }
     }
@@ -60,19 +54,13 @@ Item {
     onTriggered: proc.running = true
   }
 
-  RowLayout {
-    id: row
+  NText {
     anchors.centerIn: parent
-    spacing: 4
-
-    NText {
-      text: root.statusIcon
-      font.pixelSize: Style.getBarFontSizeForDensity(Settings.getBarDensityForScreen(screenName), capsuleHeight, false) - 1
-      color: root.statusClass === "live" ? "#ffb3ad"
-           : root.statusClass === "static" ? "#e1c28c"
-           : Color.mOnSurface
-      Layout.alignment: Qt.AlignVCenter
-    }
+    text: root.statusIcon
+    font.pixelSize: 14
+    color: root.statusClass === "live" ? "#ffb3ad"
+         : root.statusClass === "static" ? "#e1c28c"
+         : Color.mOnSurface
   }
 
   MouseArea {
@@ -103,43 +91,23 @@ Item {
     id: contextMenu
 
     model: [
-      {
-        "label": I18n.tr("actions.random-wallpaper"),
-        "action": "random-wallpaper",
-        "icon": "dice"
-      },
-      {
-        "label": I18n.tr("actions.toggle-pause"),
-        "action": "toggle-pause",
-        "icon": "pause"
-      },
-      {
-        "label": I18n.tr("actions.open-picker"),
-        "action": "open-picker",
-        "icon": "wallpaper-selector"
-      },
-      {
-        "label": I18n.tr("actions.widget-settings"),
-        "action": "widget-settings",
-        "icon": "settings"
-      },
+      { "label": "Random", "action": "random-wallpaper", "icon": "dice" },
+      { "label": "Toggle pause", "action": "toggle-pause", "icon": "pause" },
+      { "label": "Picker", "action": "open-picker", "icon": "wallpaper-selector" },
+      { "label": "Settings", "action": "widget-settings", "icon": "settings" },
     ]
 
     onTriggered: action => {
       contextMenu.close()
       PanelService.closeContextMenu(screen)
-
-      if (action === "random-wallpaper") {
+      if (action === "random-wallpaper")
         Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaper-picker.sh random"])
-      } else if (action === "toggle-pause") {
+      else if (action === "toggle-pause")
         Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaperctl.sh toggle"])
-      } else if (action === "open-picker") {
+      else if (action === "open-picker")
         Process.exec("sh", ["-c", "~/.config/hypr/Scripts/wallpaper-picker.sh"])
-      } else if (action === "widget-settings") {
+      else if (action === "widget-settings")
         BarService.openPluginSettings(screen, pluginApi.manifest)
-      }
     }
   }
-
-  Component.onCompleted: refresh()
 }
