@@ -171,9 +171,9 @@ for r in d.get('results', []):
     pid = r['id']
     title = r.get('alt_description', '') or r.get('description', '') or pid
     title = re.sub(r'[^\w\s-]', '', title)[:60]
-    url = r['urls']['full']
+    url = r['urls']['raw']
     thumb = r['urls']['thumb']
-    ext = url.split('.')[-1].split('?')[0] if '.' in url else 'jpg'
+    ext = 'jpg'
     fname = f'{pid}_{title}.{ext}'.replace(' ', '_')
     fname = re.sub(r'[^a-zA-Z0-9._-]', '', fname)
     print(f'{title}|{url}|{thumb}|{fname}')
@@ -198,9 +198,9 @@ import sys, json, re
 r = json.load(sys.stdin)
 title = r.get('alt_description', '') or r.get('description', '') or r['id']
 title = re.sub(r'[^\w\s-]', '', title)[:60]
-url = r['urls']['full']
+url = r['urls']['raw']
 thumb = r['urls']['thumb']
-ext = url.split('.')[-1].split('?')[0] if '.' in url else 'jpg'
+ext = 'jpg'
 fname = f\"{r['id']}_{title}.{ext}\".replace(' ', '_')
 fname = re.sub(r'[^a-zA-Z0-9._-]', '', fname)
 print(f'{title}|{url}|{thumb}|{fname}')
