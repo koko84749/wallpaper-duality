@@ -40,7 +40,8 @@ install_packages() {
     local pkgs=()
     if command -v pacman &>/dev/null; then
         log "Arch Linux detected (pacman)"
-        pkgs=(mpv mpvpaper awww rogi ffmpegthumbnailer libnotify thunar ttf-jetbrains-mono-nerd inotify-tools)
+        pkgs=(mpv mpvpaper rofi ffmpegthumbnailer libnotify thunar ttf-jetbrains-mono-nerd inotify-tools)
+        local aur_pkgs=(awww)
         local missing=()
         for p in "${pkgs[@]}"; do
             pacman -Qi "$p" &>/dev/null || missing+=("$p")
@@ -50,6 +51,23 @@ install_packages() {
             sudo pacman -S --needed --noconfirm "${missing[@]}"
         else
             log "All packages already installed"
+        fi
+
+        local aur_missing=()
+        for p in "${aur_pkgs[@]}"; do
+            pacman -Qi "$p" &>/dev/null || aur_missing+=("$p")
+        done
+        if [ ${#aur_missing[@]} -gt 0 ]; then
+            if command -v yay &>/dev/null; then
+                log "Installing AUR packages: ${aur_missing[*]}"
+                yay -S --needed --noconfirm "${aur_missing[@]}"
+            elif command -v paru &>/dev/null; then
+                log "Installing AUR packages: ${aur_missing[*]}"
+                paru -S --needed --noconfirm "${aur_missing[@]}"
+            else
+                warn "AUR packages not installed: ${aur_missing[*]}"
+                warn "Install them with your AUR helper (yay/paru) or from source"
+            fi
         fi
     elif command -v apt &>/dev/null; then
         log "Debian/Ubuntu detected (apt)"
@@ -77,16 +95,16 @@ install_packages() {
         fi
     else
         warn "Unknown distro. Please install manually:"
-        warn "  mpv mpvpaper awww rogi ffmpegthumbnailer libnotify thunar"
+        warn "  mpv mpvpaper rofi ffmpegthumbnailer libnotify thunar"
     fi
 
-    if ! command -v rogi &>/dev/null; then
-        warn "rogi (Rofi 2.0+) not found — needed for the thumbnail wallpaper picker"
-        warn "Install it from https://github.com/davatorium/rofi"
+    if ! command -v rofi &>/dev/null; then
+        warn "rofi not found — needed for the thumbnail wallpaper picker"
+        warn "Install it: sudo pacman -S rofi"
     fi
     if ! command -v awww &>/dev/null; then
         warn "awww not found — needed for static wallpaper support"
-        warn "Install it from https://github.com/find-drama/awww"
+        warn "Install it: yay -S awww"
     fi
 }
 

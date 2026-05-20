@@ -9,7 +9,7 @@ A complete wallpaper management system with keybind controls and a Rofi-based vi
 
 ```bash
 # Core
-sudo pacman -S mpv mpvpaper awww rogi ffmpegthumbnailer
+sudo pacman -S mpv mpvpaper rofi ffmpegthumbnailer
 
 # Notifications
 sudo pacman -S libnotify
@@ -22,6 +22,9 @@ sudo pacman -S ttf-jetbrains-mono-nerd
 
 # File watcher (auto-detect new wallpapers)
 sudo pacman -S inotify-tools
+
+# Static wallpaper support (AUR)
+yay -S awww
 
 # Waybar module (optional — for bar status indicator)
 sudo pacman -S waybar
